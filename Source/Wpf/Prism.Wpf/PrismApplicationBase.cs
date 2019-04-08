@@ -6,6 +6,7 @@ using Prism.Modularity;
 using Prism.Mvvm;
 using Prism.Regions;
 using Prism.Regions.Behaviors;
+using Prism.Services.Dialogs;
 using System;
 using System.Linq;
 using System.Windows;
@@ -53,7 +54,7 @@ namespace Prism
         {
             ViewModelLocationProvider.SetDefaultViewModelFactory((view, type) =>
             {
-                return _containerExtension.ResolveViewModelForView(view, type);
+                return Container.Resolve(type);
             });
         }
 
@@ -86,8 +87,9 @@ namespace Prism
                 RegionManager.SetRegionManager(shell, _containerExtension.Resolve<IRegionManager>());
                 RegionManager.UpdateRegions();
                 InitializeShell(shell);
-                InitializeModules();
             }
+			
+            InitializeModules();
         }
 
         /// <summary>
@@ -116,6 +118,7 @@ namespace Prism
             containerRegistry.RegisterInstance(_containerExtension);
             containerRegistry.RegisterInstance(_moduleCatalog);
             containerRegistry.RegisterSingleton<ILoggerFacade, TextLogger>();
+            containerRegistry.RegisterSingleton<IDialogService, DialogService>();
             containerRegistry.RegisterSingleton<IModuleInitializer, ModuleInitializer>();
             containerRegistry.RegisterSingleton<IModuleManager, ModuleManager>();
             containerRegistry.RegisterSingleton<RegionAdapterMappings>();
@@ -126,6 +129,7 @@ namespace Prism
             containerRegistry.Register<IRegionNavigationJournalEntry, RegionNavigationJournalEntry>();
             containerRegistry.Register<IRegionNavigationJournal, RegionNavigationJournal>();
             containerRegistry.Register<IRegionNavigationService, RegionNavigationService>();
+            containerRegistry.Register<IDialogWindow, Services.Dialogs.DefaultDialogs.DialogWindow>(); //default dialog host
         }
 
         /// <summary>
@@ -148,6 +152,7 @@ namespace Prism
                 regionBehaviors.AddIfMissing(RegionMemberLifetimeBehavior.BehaviorKey, typeof(RegionMemberLifetimeBehavior));
                 regionBehaviors.AddIfMissing(ClearChildViewsRegionBehavior.BehaviorKey, typeof(ClearChildViewsRegionBehavior));
                 regionBehaviors.AddIfMissing(AutoPopulateRegionBehavior.BehaviorKey, typeof(AutoPopulateRegionBehavior));
+                regionBehaviors.AddIfMissing(IDestructibleRegionBehavior.BehaviorKey, typeof(IDestructibleRegionBehavior));
             }
         }
 
@@ -195,7 +200,7 @@ namespace Prism
         /// </summary>
         protected virtual void OnInitialized()
         {
-            MainWindow.Show();
+            MainWindow?.Show();
         }
 
         /// <summary>
@@ -208,14 +213,8 @@ namespace Prism
         /// </summary>
         protected virtual void InitializeModules()
         {
-            if (_moduleCatalog.Modules.Count() > 0)
-            {
-                if (!_containerExtension.SupportsModules)
-                    throw new NotSupportedException("Container is immutable and does not support the use of Modules.");
-
-                IModuleManager manager = _containerExtension.Resolve<IModuleManager>();
-                manager.Run();
-            }
+            IModuleManager manager = _containerExtension.Resolve<IModuleManager>();
+            manager.Run();
         }
 
         /// <summary>

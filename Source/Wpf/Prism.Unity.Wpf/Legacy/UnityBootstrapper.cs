@@ -12,6 +12,7 @@ using Unity.Exceptions;
 using Unity.Lifetime;
 using Prism.Ioc;
 using Prism.Unity.Ioc;
+using Prism.Services.Dialogs;
 
 namespace Prism.Unity
 {
@@ -69,7 +70,7 @@ namespace Prism.Unity
                 throw new InvalidOperationException(Resources.NullUnityContainerException);
             }
 
-            _containerExtension = CreateContainerExtension();
+            ContainerExtension = CreateContainerExtension();
 
             this.Logger.Log(Resources.ConfiguringUnityContainer, Category.Debug, Priority.Low);
             this.ConfigureContainer();
@@ -141,13 +142,16 @@ namespace Prism.Unity
             this.Logger.Log(Resources.AddingUnityBootstrapperExtensionToContainer, Category.Debug, Priority.Low);
             this.Container.AddNewExtension<UnityBootstrapperExtension>();
 
-            Container.RegisterInstance<IContainerExtension>(_containerExtension);
+            Container.RegisterInstance<IContainerExtension>(ContainerExtension);
             Container.RegisterInstance<ILoggerFacade>(Logger);
 
             this.Container.RegisterInstance(this.ModuleCatalog);
 
             if (useDefaultConfiguration)
             {
+                RegisterTypeIfMissing(typeof(IDialogService), typeof(DialogService), true);
+                RegisterTypeIfMissing(typeof(IDialogWindow), typeof(Services.Dialogs.DefaultDialogs.DialogWindow), false);
+
                 RegisterTypeIfMissing(typeof(IServiceLocator), typeof(UnityServiceLocatorAdapter), true);
                 RegisterTypeIfMissing(typeof(IModuleInitializer), typeof(ModuleInitializer), true);
                 RegisterTypeIfMissing(typeof(IModuleManager), typeof(ModuleManager), true);

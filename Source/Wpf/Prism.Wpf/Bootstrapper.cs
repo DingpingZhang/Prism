@@ -22,7 +22,7 @@ namespace Prism
     [Obsolete("It is recommended to use the new PrismApplication as the app's base class. This will require updating the App.xaml and App.xaml.cs files.")]
     public abstract class Bootstrapper
     {
-        protected IContainerExtension _containerExtension;
+        protected IContainerExtension ContainerExtension;
         /// <summary>
         /// Gets the <see cref="ILoggerFacade"/> for the application.
         /// </summary>
@@ -162,6 +162,8 @@ namespace Prism
 
                 defaultRegionBehaviorTypesDictionary.AddIfMissing(AutoPopulateRegionBehavior.BehaviorKey,
                                                   typeof(AutoPopulateRegionBehavior));
+
+                defaultRegionBehaviorTypesDictionary.AddIfMissing(IDestructibleRegionBehavior.BehaviorKey, typeof(IDestructibleRegionBehavior));
             }
 
             return defaultRegionBehaviorTypesDictionary;

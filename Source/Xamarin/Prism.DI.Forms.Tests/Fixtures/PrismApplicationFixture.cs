@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 #if Autofac
@@ -10,6 +11,7 @@ using Ninject;
 #endif
 using Prism.Common;
 using Prism.DI.Forms.Tests;
+using Prism.DI.Forms.Tests.Fixtures;
 using Prism.DI.Forms.Tests.Mocks;
 using Prism.DI.Forms.Tests.Mocks.Modules;
 using Prism.DI.Forms.Tests.Mocks.Services;
@@ -19,36 +21,25 @@ using Prism.DI.Forms.Tests.Navigation;
 using Prism.Forms.Tests.Mocks.Logging;
 using Prism.Ioc;
 using Prism.Logging;
+using Prism.Mvvm;
 using Prism.Navigation;
 using Prism.Services;
 using Xamarin.Forms;
+using Xamarin.Forms.Mocks;
 using Xunit;
 using Xunit.Abstractions;
 
-#if Autofac
-namespace Prism.Autofac.Forms.Tests.Fixtures
-#elif DryIoc
+#if DryIoc
 namespace Prism.DryIoc.Forms.Tests.Fixtures
-#elif Ninject
-namespace Prism.Ninject.Forms.Tests.Fixtures
 #elif Unity
 namespace Prism.Unity.Forms.Tests.Fixtures
 #endif
 {
-    public class PrismApplicationFixture
+    public class PrismApplicationFixture : FixtureBase
     {
-        ITestOutputHelper _testOutputHelper { get; }
-
         public PrismApplicationFixture(ITestOutputHelper testOutputHelper)
+            : base(testOutputHelper)
         {
-            _testOutputHelper = testOutputHelper;
-            Xamarin.Forms.Mocks.MockForms.Init();
-        }
-
-        private PrismApplicationMock CreateMockApplication(Page view = null)
-        {
-            var initializer = new XunitPlatformInitializer(_testOutputHelper);
-            return view == null ? new PrismApplicationMock(initializer) : new PrismApplicationMock(initializer, view);
         }
 
         [Fact]
@@ -153,6 +144,40 @@ namespace Prism.Unity.Forms.Tests.Fixtures
             Assert.Contains("missing", result.Exception.ToString(), StringComparison.OrdinalIgnoreCase);
         }
 
+        [Theory]
+        [InlineData(typeof(AutowireView), TargetIdiom.Unsupported)]
+        [InlineData(typeof(AutowireViewTablet), TargetIdiom.Tablet)]
+        public async Task NavigationUses_IdiomSpecificView(Type viewType, TargetIdiom idiom)
+        {
+            Device.SetIdiom(idiom);
+            var initializer = new XunitPlatformInitializer(_testOutputHelper);
+            var app = new PrismApplicationMockPlatformAware(initializer);
+
+            Assert.True(app.Initialized);
+            await app.NavigationService.NavigateAsync("AutowireView");
+            Assert.IsType(viewType, app.MainPage);
+            Assert.IsType<AutowireViewModel>(app.MainPage.BindingContext);
+
+            Device.SetIdiom(TargetIdiom.Unsupported);
+        }
+
+        [Theory]
+        [InlineData(typeof(ViewAMock), "Test")]
+        [InlineData(typeof(ViewAMockAndroid), Device.Android)]
+        public async Task NavigationUses_PlatformSpecificView(Type viewType, string runtimePlatform)
+        {
+            MockForms.UpdateRuntimePlatform(runtimePlatform);
+            var initializer = new XunitPlatformInitializer(_testOutputHelper);
+            var app = new PrismApplicationMockPlatformAware(initializer);
+
+            Assert.True(app.Initialized);
+            await app.NavigationService.NavigateAsync("ViewAMock");
+            Assert.IsType(viewType, app.MainPage);
+            Assert.IsType<ViewModelAMock>(app.MainPage.BindingContext);
+
+            MockForms.UpdateRuntimePlatform("Test");
+        }
+
         [Fact]
         public async Task Navigate_Key()
         {
@@ -186,34 +211,9 @@ namespace Prism.Unity.Forms.Tests.Fixtures
         public void Module_Initialize()
         {
             var app = CreateMockApplication();
-            if(((IContainerExtension)app.Container).SupportsModules)
-            {
-                var module = app.Container.Resolve<ModuleMock>();
-                Assert.NotNull(module);
-                Assert.True(module.Initialized);
-            }
-            else
-            {
-                _testOutputHelper.WriteLine("Container Does Not Support Modules");
-            }
-        }
-
-        [Fact]
-        public void ThrowsException_If_Container_DoesNotSupportModules()
-        {
-            PrismApplicationMock app = null;
-            var exception = Record.Exception(() => app = new PrismApplicationModulesMock(new XunitPlatformInitializer(_testOutputHelper)));
-            // The app should always be null if we do not support Modules
-            if (app == null || !((IContainerExtension)app.Container).SupportsModules)
-            {
-                _testOutputHelper.WriteLine("Container Does Not Support Modules");
-                Assert.NotNull(exception);
-                Assert.IsType<NotSupportedException>(exception);
-            }
-            else
-            {
-                _testOutputHelper.WriteLine("Container Supports Modules");
-            }
+            var module = app.Container.Resolve<ModuleMock>();
+            Assert.NotNull(module);
+            Assert.True(module.Initialized);
         }
 
         [Fact]
@@ -228,8 +228,10 @@ namespace Prism.Unity.Forms.Tests.Fixtures
         [Fact]
         public void CustomNavigation_Resolved_In_ViewModel()
         {
-            var app = new PrismApplicationCustomNavMock(new XunitPlatformInitializer(_testOutputHelper));
-            app.MainPage = new AutowireView();
+            var app = new PrismApplicationCustomNavMock(new XunitPlatformInitializer(_testOutputHelper))
+            {
+                MainPage = new AutowireView()
+            };
             var vm = app.MainPage.BindingContext as AutowireViewModel;
 
             Assert.NotNull(vm);

@@ -13,6 +13,7 @@ using Prism.Ninject.Regions;
 using Prism.Regions;
 using Prism.Ioc;
 using Prism.Ninject.Ioc;
+using Prism.Services.Dialogs;
 
 namespace Prism.Ninject
 {
@@ -68,7 +69,7 @@ namespace Prism.Ninject
                 throw new InvalidOperationException(Resources.NullNinjectKernelException);
             }
 
-            _containerExtension = CreateContainerExtension();
+            ContainerExtension = CreateContainerExtension();
 
             this.Logger.Log(Resources.ConfiguringNinjectKernel, Category.Debug, Priority.Low);
             this.ConfigureKernel();
@@ -159,12 +160,15 @@ namespace Prism.Ninject
         /// </summary>
         protected virtual void ConfigureKernel()
         {
-            this.Kernel.Bind<IContainerExtension>().ToConstant(this._containerExtension).InSingletonScope();
+            this.Kernel.Bind<IContainerExtension>().ToConstant(this.ContainerExtension).InSingletonScope();
             this.Kernel.Bind<ILoggerFacade>().ToConstant(this.Logger).InSingletonScope();
             this.Kernel.Bind<IModuleCatalog>().ToConstant(this.ModuleCatalog).InSingletonScope();
 
             if (this.useDefaultConfiguration)
             {
+                this.Kernel.RegisterTypeIfMissing<IDialogService, DialogService>(true);
+                this.Kernel.RegisterTypeIfMissing<IDialogWindow, Services.Dialogs.DefaultDialogs.DialogWindow>(false);
+
                 this.Kernel.RegisterTypeIfMissing<IServiceLocator, NinjectServiceLocatorAdapter>(true);
                 this.Kernel.RegisterTypeIfMissing<IModuleInitializer, ModuleInitializer>(true);
                 this.Kernel.RegisterTypeIfMissing<IModuleManager, ModuleManager>(true);

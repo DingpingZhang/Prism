@@ -143,8 +143,8 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Xamarin.Forms" Version="3.0.0.482510" />
-    <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform" Version="6.0.1" />
+    <PackageReference Include="Xamarin.Forms" Version="3.6.0.220655" />
+    <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform" Version="6.1.9" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\Source\Prism\Prism.csproj">
@@ -158,6 +158,10 @@
     <ProjectReference Include="..\..\..\..\..\Source\Xamarin\Prism.Forms\Prism.Forms.csproj">
       <Project>{152da85c-13f4-4427-850c-052cbbcdd4b0}</Project>
       <Name>Prism.Forms</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\ModuleA\ModuleA.csproj">
+      <Project>{f0d7441b-d48a-4f58-91fb-45fa441b0434}</Project>
+      <Name>ModuleA</Name>
     </ProjectReference>
     <ProjectReference Include="..\HelloWorld\HelloWorld.csproj">
       <Project>{DCC0DE3D-297A-4CE1-A002-81AEE3CA0AE4}</Project>

@@ -1,7 +1,6 @@
 using System;
 using HelloWorld.Views;
 using Prism;
-using Prism.DryIoc;
 using Prism.Ioc;
 using Prism.Modularity;
 using Xamarin.Forms;
@@ -10,7 +9,7 @@ using Xamarin.Forms.Xaml;
 [assembly: XamlCompilation (XamlCompilationOptions.Compile)]
 namespace HelloWorld
 {
-    public partial class App : PrismApplication
+    public sealed partial class App
     {
         public App() 
             : this(null)
@@ -61,7 +60,7 @@ namespace HelloWorld
             //NavigationService.NavigateAsync($"ViewA/ViewB/MyMasterDetail/NavigationPage/ViewA/ViewB?{KnownNavigationParameters.UseModalNavigation}=true/ViewA/ViewC");
             //NavigationService.NavigateAsync($"MyMasterDetail/NavigationPage/MyTabbedPage?{KnownNavigationParameters.SelectedTab}=ViewC");            
 
-            NavigationService.NavigateAsync($"NavigationPage/ViewA/ViewB/ViewC");
+            NavigationService.NavigateAsync($"MyMasterDetail/MyTabbedPage");
         }
 
         protected override void RegisterTypes(IContainerRegistry containerRegistry)
@@ -87,11 +86,17 @@ namespace HelloWorld
 
         protected override void OnSleep ()
         {
+            // Support IApplicationLifecycleAware
+            base.OnSleep();
+
             // Handle when your app sleeps
         }
 
         protected override void OnResume ()
         {
+            // Support IApplicationLifecycleAware
+            base.OnResume();
+
             // Handle when your app resumes
         }
     }
